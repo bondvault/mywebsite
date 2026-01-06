@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BondVault - Learning Center</title>
+    <meta name="description" content="Learn about the Indian Bond Market. Understand Non-Convertible Debentures (NCDs), Credit Ratings, Yield vs Coupon, and debt investment fundamentals.">
+    
+    <style>
+        /* --- CSS Reset and Base Styles --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background-color: #f7f7f7; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px 15px; }
+        a { text-decoration: none; color: inherit; }
+        
+        /* --- Header and Navigation Styles (UPDATED) --- */
+        .main-header { display: flex; justify-content: space-between; align-items: center; background-color: #007f3f; color: white; padding: 10px 15px; flex-wrap: wrap; }
+        .logo-nav-container { display: flex; align-items: center; }
+        .logo { font-size: 1.5em; font-weight: bold; padding-right: 20px; white-space: nowrap; }
+        .main-nav ul { list-style: none; display: flex; padding: 0; }
+        .main-nav li { padding: 0 10px; }
+        
+        /* CRITICAL CHANGE 1: Define base link style */
+        .main-nav a { 
+            color: white; 
+            padding: 5px 10px; 
+            position: relative; 
+            display: block; /* Allows padding and background to work like a button */
+            border-radius: 5px; 
+        }
+        
+        .contact-btn { background-color: white; color: #007f3f; padding: 5px 12px; border-radius: 5px; font-weight: bold; font-size: 0.9em; }
+        
+        /* CRITICAL CHANGE 2: Target the anchor tag specifically */
+        .main-nav a.active-link { 
+            background-color: white; 
+            color: #007f3f !important; 
+        }
+
+        /* --- Button and Card Styles --- */
+        .explore-btn { display: inline-block; background-color: #007f3f; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; margin-top: 10px; margin-bottom: 30px; transition: background-color 0.3s; border: none; cursor: pointer; }
+        .explore-btn:hover { background-color: #006432; }
+        .learning-content h1 { color: #007f3f; margin-bottom: 20px; }
+        .topic-card { background-color: white; padding: 20px; margin-bottom: 20px; border-radius: 5px; border: 1px solid #ddd; }
+        .topic-card h2 { color: #333; font-size: 1.2em; margin-bottom: 10px; }
+
+        /* --- Regulatory Disclaimer Footer --- */
+        .site-footer { background-color: #222; color: #fff; padding: 25px 0; font-size: 0.9em; text-align: center; margin-top: 40px; border-top: 4px solid #007f3f; }
+        .site-footer a { color: #7affc8; }
+        .site-footer p { margin-bottom: 10px; }
+
+        /* --- Contact Us Modal Styles --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 30px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; position: relative; }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-content h2 { color: #007f3f; margin-bottom: 15px; }
+        .modal-content label { display: block; margin-top: 10px; font-weight: bold; }
+        .modal-content input:not([type="checkbox"]), .modal-content textarea { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .modal-content .explore-btn { width: 100%; text-align: center; }
+        .modal-content .legal-check { font-size: 0.9em; margin-top: 10px; margin-bottom: 15px; }
+        .modal-content input[type="checkbox"] { display: inline-block; width: auto; margin-right: 5px; }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            .main-header { flex-direction: column; align-items: flex-start; }
+            .logo-nav-container { flex-direction: column; align-items: flex-start; width: 100%; }
+            .main-nav ul { margin-top: 10px; flex-wrap: wrap; }
+            .main-nav li { padding: 0 10px 0 0; }
+            .contact-btn { margin-top: 10px; align-self: flex-start; }
+        }
+
+        /* --- Cookie Consent --- */
+        #cookie-banner { position: fixed; bottom: 0; left: 0; width: 100%; background: #333; color: white; padding: 15px; text-align: center; z-index: 2000; display: none; }
+        #cookie-banner button { background: #007f3f; color: white; border: none; padding: 5px 15px; margin-left: 10px; cursor: pointer; border-radius: 3px; }
+    </style>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo-nav-container">
+            <div class="logo">BondVault</div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="market-data.html">Market Data</a></li>
+                    <li><a href="learning.html" class="active-link">Learning</a></li>
+                </ul>
+            </nav>
+        </div>
+        <a href="#" class="contact-btn" id="openContactModal">Contact Us</a>
+    </header>
+
+    <main class="container">
+        <section class="learning-content">
+            <h1>Understanding Debt and Fixed Income</h1>
+            <p>This section is for educational purposes only. Understanding the concepts below is crucial for navigating the debt market.</p>
+
+            <div class="topic-card">
+                <h2>What is a Non-Convertible Debenture (NCD)?</h2>
+                <p>An NCD is a financial instrument that certifies a company has borrowed money from the issuer. It is 'non-convertible,' meaning it cannot be converted into equity shares. They are a common form of corporate debt in India, offering fixed income (coupon payments) over a defined tenure.</p>
+            </div>
+
+            <div class="topic-card">
+                <h2>The Role of Credit Ratings (AAA, AA, etc.)</h2>
+                <p>Credit ratings are assigned by SEBI-registered rating agencies (like CRISIL, ICRA, CARE). They assess the financial health of the issuer and their ability to repay the debt. They indicate the relative safety of the bond:</p>
+                <ul>
+                    <li>**AAA:** Highest safety, very low credit risk.</li>
+                    <li>**AA:** High safety, low credit risk.</li>
+                    <li>**A:** Adequate safety, moderate credit risk.</li>
+                </ul>
+                <p class="educational-note">*Note: A credit rating is an opinion and not a recommendation to buy or sell a security.</p>
+            </div>
+
+             <div class="topic-card">
+                <h2>The Difference Between Coupon and Yield</h2>
+                <p>The **Coupon Rate** is the fixed interest rate the issuer pays the bondholder based on the face value. The **Yield to Maturity (YTM)** is the total return anticipated on a bond if it is held until maturity. YTM changes daily with the bond's market price, while the coupon rate is fixed. For research purposes, the YTM is the forward-looking metric often used by investors, but we focus on the factual coupon rate.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p><strong>Disclaimer:</strong> BondVault.in is a technology platform for educational purposes only and is NOT a SEBI-registered Investment Advisor, Research Analyst, or Broking entity. We do not provide investment advice or bond recommendations. All data is pulled from public sources (SEBI/Exchanges) and provided "as is" without any warranty of accuracy. BondVault.in shall not be liable for any financial losses. Past performance of bonds is not indicative of future results.</p>
+            <p style="font-weight: bold; color: #fff; margin-top: 10px; border: 1px solid #fff; padding: 10px; display: inline-block;">Investment in securities market are subject to market risks. Read all the related documents carefully before investing.</p>
+            <p style="margin-top: 5px;"><a href="terms.html">Terms of Use</a> | <a href="privacy.html">Privacy Policy</a></p>
+            <p style="margin-top: 15px;">&copy; 2025 BondVault.</p>
+        </div>
+    </footer>
+    
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Get in Touch</h2>
+            <p>Please enter your details and we'll get back to you shortly.</p>
+            <form id="contactForm">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" required>
+                
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="mobile">Mobile Number</label>
+                <input type="tel" id="mobile" name="mobile" placeholder="+91 98765 43210">
+
+                <label for="message">Your Message</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+                
+                <div class="legal-check">
+                    <input type="checkbox" id="legalCheck" required>
+                    <label for="legalCheck">I confirm I have read and agree to the <a href="terms.html" target="_blank" rel="noopener noreferrer">Terms of Use</a> and <a href="privacy.html" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.</label>
+                </div>
+                
+                <button type="submit" class="explore-btn">Send Message</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="cookie-banner">
+        <p style="display:inline; font-size: 0.9em;">We use cookies to improve your experience. By using BondVault, you agree to our <a href="privacy.html" style="text-decoration: underline;">Privacy Policy</a>.</p>
+        <button onclick="acceptCookies()">Accept</button>
+    </div>
+
+    <script>
+        if(!localStorage.getItem('bv_cookies_accepted')) {
+            document.getElementById('cookie-banner').style.display = 'block';
+        }
+        function acceptCookies() {
+            localStorage.setItem('bv_cookies_accepted', 'true');
+            document.getElementById('cookie-banner').style.display = 'none';
+        }
+    </script>
+    <script src="market-data-scripts.js"></script>
+</body>
+</html>

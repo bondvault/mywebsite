@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BondVault - The Indian Bond Market Data Platform</title>
+    <meta name="description" content="Access real-time Indian bond market data, search ISINs, check credit ratings, and learn about NCDs. A comprehensive platform for SEBI and NSE filings.">
+    
+    <!-- SECURITY: Content Security Policy (CSP) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src https://cdnjs.cloudflare.com; connect-src 'self' https://*.onrender.com http://127.0.0.1:5000;">
+    <!-- SPEED: Preconnect to CDNs -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <!-- SEO: WebSite Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "BondVault",
+      "url": "https://www.bondvault.in/",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://www.bondvault.in/market-data.html?search={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <style>
+        /* --- CSS Reset and Base Styles --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background-color: #f7f7f7; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px 15px; }
+        a { text-decoration: none; color: inherit; }
+
+        /* --- Header and Navigation Styles (Replicated for consistency) --- */
+        .main-header { display: flex; justify-content: space-between; align-items: center; background-color: #007f3f; color: white; padding: 10px 15px; flex-wrap: wrap; }
+        .logo-nav-container { display: flex; align-items: center; }
+        .logo { font-size: 1.5em; font-weight: bold; padding-right: 20px; white-space: nowrap; }
+        .main-nav ul { list-style: none; display: flex; padding: 0; }
+        .main-nav li { padding: 0 10px; }
+        .main-nav a { 
+            color: white; 
+            padding: 5px 10px; 
+            position: relative; 
+            display: block; 
+            border-radius: 5px; 
+        }
+        .contact-btn { background-color: white; color: #007f3f; padding: 5px 12px; border-radius: 5px; font-weight: bold; font-size: 0.9em; }
+        .main-nav a.active-link { 
+            background-color: white; 
+            color: #007f3f !important; 
+        }
+
+        /* --- Hero Section Styles --- */
+        .hero { 
+            background: linear-gradient(135deg, #004d26 0%, #007f3f 100%); 
+            color: white; 
+            padding: 80px 20px; 
+            text-align: center; 
+            margin-bottom: 40px; 
+            border-radius: 8px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .hero h1 { font-size: 3em; margin-bottom: 15px; text-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .hero p { font-size: 1.3em; margin-bottom: 30px; opacity: 0.9; max-width: 700px; margin-left: auto; margin-right: auto; }
+        .explore-btn { display: inline-block; background-color: #ff9800; color: white; padding: 15px 35px; border-radius: 30px; font-weight: bold; font-size: 1.1em; transition: transform 0.2s, background-color 0.3s; cursor: pointer; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .explore-btn:hover { background-color: #e68900; }
+        
+        /* --- Featured Content Section --- */
+        .featured-section { margin-bottom: 40px; }
+        .featured-section h2 { font-size: 2em; color: #007f3f; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        
+        /* --- Features Grid --- */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 50px;
+        }
+        .feature-card {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #eee;
+            transition: transform 0.3s;
+        }
+        .feature-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .feature-card i { font-size: 2.5em; color: #007f3f; margin-bottom: 20px; }
+        .feature-card h3 { margin-bottom: 10px; color: #333; }
+        .feature-card p { color: #666; font-size: 0.95em; }
+
+        /* --- BOND CARD STYLES (REPLICATED from market-data.html) --- */
+        #bonds-container { 
+            display: grid; 
+            gap: 20px; 
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+        }
+
+        .detailed-bond-card {
+            background-color: white;
+            border: 1px solid #ddd;
+            border-left: 5px solid #007f3f;
+            border-top: 5px solid transparent; /* Fix alignment */
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px dashed #eee;
+            padding-bottom: 10px;
+        }
+
+        .detailed-bond-card h3 {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #007f3f;
+            margin: 0;
+        }
+
+        .bond-attributes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .bond-attribute {
+            font-size: 0.85em;
+            background-color: #e6ffe6;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .bond-attribute span {
+            font-weight: normal;
+            color: #555;
+            display: block;
+            margin-top: 2px;
+            font-size: 0.9em;
+        }
+
+        .view-more-btn {
+            background-color: #f0f0f0;
+            color: #007f3f;
+            padding: 8px 15px;
+            border: 1px solid #007f3f;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            align-self: flex-start;
+            transition: background-color 0.2s;
+        }
+
+        .view-more-btn:hover {
+            background-color: #007f3f;
+            color: white;
+        }
+
+        .legal-banner { background-color: #fff3e0; border-left: 5px solid #ff9800; color: #5d4037; padding: 15px; margin: 20px 0; border-radius: 4px; font-size: 0.9em; }
+
+        /* --- Regulatory Disclaimer Footer --- */
+        .site-footer { background-color: #222; color: #fff; padding: 25px 0; font-size: 0.9em; text-align: center; margin-top: 40px; border-top: 4px solid #007f3f; }
+        .site-footer a { color: #7affc8; }
+        .site-footer p { margin-bottom: 10px; }
+        
+        /* --- Modal Styles (Replicated for consistency) --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 30px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; position: relative; }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-content h2 { color: #007f3f; margin-bottom: 15px; }
+        .modal-content label { display: block; margin-top: 10px; font-weight: bold; }
+        .modal-content input:not([type="checkbox"]), .modal-content textarea { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .modal-content .explore-btn { width: 100%; text-align: center; }
+        .modal-content .legal-check { font-size: 0.9em; margin-top: 10px; margin-bottom: 15px; }
+        .modal-content input[type="checkbox"] { display: inline-block; width: auto; margin-right: 5px; }
+        .details-modal-body .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dotted #eee;
+        }
+        .details-modal-body .detail-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .details-modal-body .detail-value {
+            color: #007f3f;
+            font-weight: bold;
+        }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2em; }
+            .hero p { font-size: 1em; }
+            .main-header { flex-direction: column; align-items: flex-start; }
+            .logo-nav-container { flex-direction: column; align-items: flex-start; width: 100%; }
+            .main-nav ul { margin-top: 10px; flex-wrap: wrap; }
+            .main-nav li { padding: 0 10px 0 0; }
+            .contact-btn { margin-top: 10px; align-self: flex-start; }
+            .detailed-bond-card { min-width: 100%; }
+        }
+
+        /* --- Cookie Consent --- */
+        #cookie-banner { position: fixed; bottom: 0; left: 0; width: 100%; background: #333; color: white; padding: 15px; text-align: center; z-index: 2000; display: none; }
+        #cookie-banner button { background: #007f3f; color: white; border: none; padding: 5px 15px; margin-left: 10px; cursor: pointer; border-radius: 3px; }
+    </style>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo-nav-container">
+            <div class="logo">BondVault</div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html" class="active-link">Home</a></li>
+                    <li><a href="market-data.html">Market Data</a></li>
+                    <li><a href="learning.html">Learning</a></li>
+                </ul>
+            </nav>
+        </div>
+        <button class="contact-btn" id="openContactModal" style="border:none; cursor:pointer; font-family:inherit;">Contact Us</button>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <h1>A Comprehensive Platform for Indian Bond Data</h1>
+            <p>Access, search, and analyze publicly disclosed market data from SEBI, NSE, and BSE filings in one unified platform.</p>
+            <a href="market-data.html" class="explore-btn">Explore Market Data <i class="fas fa-arrow-right"></i></a>
+        </section>
+
+        <div class="legal-banner">
+            <h3>⚠️ Warning: Not Investment Advice</h3>
+            <p>BondVault.in is a technology platform for educational purposes only and is NOT a SEBI-registered Investment Advisor, Research Analyst, or Broking entity. We do not provide investment advice or bond recommendations. All data is pulled from public sources (SEBI/Exchanges) and provided "as is" without any warranty of accuracy. BondVault.in shall not be liable for any financial losses. Past performance of bonds is not indicative of future results.</p>
+        </div>
+
+    </main>
+
+    <!-- RISK MITIGATION: Mandatory Acknowledgment Modal -->
+    <div id="riskModal" class="modal" style="z-index: 3000;">
+        <div class="modal-content" style="border-top: 5px solid #d35400; max-width: 600px;">
+            <h2 style="color: #d35400; border-bottom: 1px solid #eee; padding-bottom: 10px;"><i class="fas fa-exclamation-triangle"></i> Risk Disclosure & Waiver</h2>
+            <p><strong>Attention User:</strong> You are accessing a database of fixed-income securities. Before proceeding, you must acknowledge the following:</p>
+            <ul style="margin: 15px 0; padding-left: 20px; color: #555; line-height: 1.6;">
+                <li><strong>No Investment Advice:</strong> BondVault is an educational aggregator. We do not recommend buying or selling any security.</li>
+                <li><strong>Data Accuracy:</strong> Data is sourced from public filings and may be delayed or contain errors. Verify with official exchange filings.</li>
+                <li><strong>Investment Risk:</strong> Corporate bonds carry credit risk, liquidity risk, and interest rate risk. Capital loss is possible.</li>
+            </ul>
+            <div style="background: #fff3e0; padding: 10px; border-radius: 4px; font-size: 0.9em; color: #5d4037; margin-bottom: 15px;">
+                By clicking "I Acknowledge", you confirm that you have read and understood the <a href="terms.html" target="_blank" style="text-decoration: underline; font-weight: bold;">Terms of Use</a> and <a href="terms.html#risk" target="_blank" style="text-decoration: underline; font-weight: bold;">Risk Disclosure Statement</a>.
+            </div>
+            <button id="acceptRiskBtn" class="explore-btn" style="width: 100%; background-color: #d35400; margin-top: 0;">I Acknowledge & Proceed</button>
+        </div>
+    </div>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p><strong>Disclaimer:</strong> BondVault.in is a technology platform for educational purposes only and is NOT a SEBI-registered Investment Advisor, Research Analyst, or Broking entity. We do not provide investment advice or bond recommendations. All data is pulled from public sources (SEBI/Exchanges) and provided "as is" without any warranty of accuracy. BondVault.in shall not be liable for any financial losses. Past performance of bonds is not indicative of future results.</p>
+            <p style="font-weight: bold; color: #fff; margin-top: 10px; border: 1px solid #fff; padding: 10px; display: inline-block;">Investment in securities market are subject to market risks. Read all the related documents carefully before investing.</p>
+            <p style="margin-top: 5px;"><a href="terms.html">Terms of Use</a> | <a href="privacy.html">Privacy Policy</a></p>
+            <p style="margin-top: 15px;">&copy; 2025 BondVault.</p>
+        </div>
+    </footer>
+    
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Get in Touch</h2>
+            <p>Please enter your details and we'll get back to you shortly.</p>
+            <form id="contactForm">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" required>
+                
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="mobile">Mobile Number</label>
+                <input type="tel" id="mobile" name="mobile" placeholder="+91 98765 43210">
+
+                <label for="message">Your Message</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+                
+                <div class="legal-check">
+                    <input type="checkbox" id="legalCheck" required>
+                    <label for="legalCheck">I confirm I have read and agree to the <a href="terms.html" target="_blank">Terms of Use</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</label>
+                </div>
+                
+                <button type="submit" class="explore-btn">Send Message</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="cookie-banner">
+        <p style="display:inline; font-size: 0.9em;">We use cookies to improve your experience. By using BondVault, you agree to our <a href="privacy.html" style="text-decoration: underline;">Privacy Policy</a>.</p>
+        <button onclick="acceptCookies()">Accept</button>
+    </div>
+
+
+    <script>
+        // CONFIGURATION: Backend URL
+        // If your Render app has a different name, update the URL below.
+        const API_BASE = (window.location.hostname === "127.0.0.1" || window.location.hostname === "localhost" || window.location.protocol === "file:")
+            ? "http://127.0.0.1:5000" : "https://bondvault-api.onrender.com";
+
+        // Fetch Data on Load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkRiskAcknowledgment(); // Trigger Risk Modal
+            setupContactModal();
+            if(!localStorage.getItem('bv_cookies_accepted')) {
+                document.getElementById('cookie-banner').style.display = 'block';
+            }
+        });
+
+        // Risk Modal Logic
+        function checkRiskAcknowledgment() {
+            if (!localStorage.getItem('bv_risk_acknowledged')) {
+                const modal = document.getElementById('riskModal');
+                if (modal) modal.style.display = 'block';
+            }
+        }
+
+        document.getElementById('acceptRiskBtn').addEventListener('click', () => {
+            localStorage.setItem('bv_risk_acknowledged', 'true');
+            document.getElementById('riskModal').style.display = 'none';
+        });
+
+        function acceptCookies() {
+            localStorage.setItem('bv_cookies_accepted', 'true');
+            document.getElementById('cookie-banner').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            // Risk Modal Blocking
+            const riskModal = document.getElementById('riskModal');
+            if (event.target == riskModal && riskModal.style.display === 'block') return;
+
+            // Also handle contact modal
+            const contactModal = document.getElementById('contactModal');
+            if (event.target == contactModal) {
+                contactModal.style.display = "none";
+            }
+        }
+
+        // Contact Modal Logic
+        const contactModal = document.getElementById('contactModal');
+        const openContactBtn = document.getElementById('openContactModal');
+        const closeContactBtn = contactModal.querySelector('.close-btn');
+
+        function setupContactModal() {
+            const contactForm = document.getElementById("contactForm");
+            const legalCheckbox = document.getElementById('legalCheck');
+
+            if (contactForm) {
+                contactForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    if (legalCheckbox && !legalCheckbox.checked) {
+                        alert('You must agree to the Terms of Use.');
+                        return;
+                    }
+                    
+                    const formData = {
+                        name: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                        mobile: document.getElementById('mobile').value,
+                        message: document.getElementById('message').value
+                    };
+
+                    try {
+                        const response = await fetch(`${API_BASE}/api/contact`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(formData)
+                        });
+                        
+                        if(response.ok) {
+                            alert('Message sent successfully! We will contact you shortly.'); 
+                            contactForm.reset(); 
+                            document.getElementById('contactModal').style.display = "none";
+                        } else {
+                            alert('Failed to send message. Please try again.');
+                        }
+                    } catch (error) {
+                        console.error(error);
+                        alert('System Offline. Please try again later.');
+                    }
+                });
+            }
+        }
+
+        if (openContactBtn) {
+            openContactBtn.onclick = function(e) {
+                e.preventDefault();
+                contactModal.style.display = "block";
+            }
+        }
+        if (closeContactBtn) {
+            closeContactBtn.onclick = function() {
+                contactModal.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>

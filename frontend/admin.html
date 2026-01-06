@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BondVault | Admin Terminal</title>
+    <!-- SECURITY: Strict Content Security Policy (No unsafe-inline scripts) -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self' https://*.onrender.com http://127.0.0.1:5000;">
+    <!-- SECURITY: Prevent Caching of Admin Panel -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* --- Base Styles (Matching Main Site) --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background-color: #f7f7f7; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px 15px; }
+
+        /* --- Header --- */
+        .main-header { display: flex; justify-content: space-between; align-items: center; background-color: #007f3f; color: white; padding: 10px 15px; }
+        .logo { font-size: 1.5em; font-weight: bold; }
+        .logout-btn { background: rgba(255,255,255,0.2); color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .logout-btn:hover { background: rgba(255,255,255,0.4); }
+
+        /* --- Login Modal --- */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #007f3f; display: flex; justify-content: center; align-items: center; z-index: 2000; }
+        .login-card { background: white; padding: 40px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); text-align: center; width: 90%; max-width: 400px; }
+        .login-card h2 { color: #007f3f; margin-bottom: 20px; }
+        .login-card input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        .login-btn { background-color: #007f3f; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; }
+        .login-btn:hover { background-color: #006432; }
+
+        /* --- Admin Dashboard --- */
+        .dashboard-card { background: white; padding: 25px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; }
+        .status-badge { padding: 5px 10px; border-radius: 15px; font-size: 0.85em; font-weight: bold; }
+        .status-live { background-color: #e6ffe6; color: #007f3f; border: 1px solid #007f3f; }
+        .status-offline { background-color: #ffe6e6; color: #cc0000; border: 1px solid #cc0000; }
+
+        /* --- Form Grid --- */
+        .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.85em; font-weight: bold; margin-bottom: 5px; color: #555; }
+        .input-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        
+        .deploy-btn { background-color: #007f3f; color: white; padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: 100%; transition: background 0.3s; }
+        .deploy-btn:hover { background-color: #006432; }
+
+        /* --- Data Table --- */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { background-color: #f0f0f0; color: #333; padding: 12px; text-align: left; border-bottom: 2px solid #ddd; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .delete-btn { background-color: #ffe6e6; color: #cc0000; border: 1px solid #cc0000; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .delete-btn:hover { background-color: #cc0000; color: white; }
+        .edit-btn { background-color: #e6f7ff; color: #0077cc; border: 1px solid #0077cc; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .edit-btn:hover { background-color: #0077cc; color: white; }
+        .view-btn { background-color: #fffbe6; color: #b38600; border: 1px solid #b38600; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+        .view-btn:hover { background-color: #b38600; color: white; }
+
+        /* --- Footer (Professional Consistency) --- */
+        .site-footer { background-color: #333; color: #ccc; padding: 20px 0; font-size: 0.85em; text-align: center; margin-top: 40px; border-top: 4px solid #007f3f; }
+        .site-footer a { color: #7affc8; text-decoration: none; }
+
+        /* --- Inquiries Modal --- */
+        .modal-lg { max-width: 900px; width: 95%; }
+        .msg-table th { background-color: #007f3f; color: white; }
+
+        /* --- Mobile Responsiveness --- */
+        @media (max-width: 768px) {
+            .dashboard-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .dashboard-header div { width: 100%; }
+            #adminSearch { width: 100% !important; }
+            .input-grid { grid-template-columns: 1fr; }
+            .table-container { overflow-x: auto; display: block; width: 100%; }
+            .main-header { flex-direction: column; gap: 10px; }
+            .logout-btn { margin: 0 !important; width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-card">
+            <h2><i class="fas fa-lock"></i> Admin Access</h2>
+            <p style="margin-bottom: 15px; font-size: 0.8em; color: #cc0000; background: #ffe6e6; padding: 8px; border-radius: 4px; border: 1px solid #ffcccc;">
+                <i class="fas fa-exclamation-triangle"></i> <strong>Restricted Area:</strong> Authorized Personnel Only.
+            </p>
+            <p style="margin-bottom: 15px; font-size: 0.9em; color: #666;">Enter your secure admin key to manage bonds.</p>
+            <input type="password" id="adminKey" placeholder="Enter Admin Key">
+            <button id="loginBtn" class="login-btn">Login</button>
+            <p id="loginError" style="color: red; margin-top: 10px; font-size: 0.9em; display: none;">Invalid Key</p>
+        </div>
+    </div>
+
+    <!-- Main Admin Interface (Template - Not Rendered Until Authorized) -->
+    <template id="admin-template">
+    <div id="admin-panel">
+        <header class="main-header">
+            <div class="logo">BondVault <span style="font-weight: normal; font-size: 0.7em; opacity: 0.9;">| Admin Console</span></div>
+            <button id="viewInquiriesBtn" class="logout-btn" style="margin-left: auto; margin-right: 10px; background: #ff9800;"><i class="fas fa-envelope"></i> View Inquiries</button>
+            <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </header>
+
+        <main class="container">
+            <div class="dashboard-card">
+                <div class="dashboard-header">
+                    <h2 id="form-title">Publish Educational Bond Data</h2>
+                    <span id="stat" class="status-badge status-offline">● Connecting...</span>
+                </div>
+                
+                <div class="input-grid">
+                    <div class="input-group"><label>Issuer Name</label><input type="text" id="issuer_name" placeholder="e.g. Power Finance Corporation Ltd"></div>
+                    <div class="input-group"><label>Issuer Ownership</label><input type="text" id="issuer_ownership_type" placeholder="e.g. PSU"></div>
+                    <div class="input-group"><label>Type of Instrument</label><input type="text" id="instrument_type" placeholder="e.g. NCD"></div>
+                    <div class="input-group"><label>Credit Rating (Source & Date)</label><input type="text" id="credit_rating" placeholder="e.g. CRISIL AAA (As of 01-Jan-2025)"></div>
+                    <div class="input-group"><label>Coupon Rate (%)</label><input type="text" id="coupon_rate_pct" placeholder="e.g. 7.50%"></div>
+                    <div class="input-group"><label>Coupon Type</label><input type="text" id="coupon_type" placeholder="e.g. Fixed"></div>
+                    <div class="input-group"><label>Coupon Payment Frequency</label><input type="text" id="payment_frequency" placeholder="e.g. Annual"></div>
+                    <div class="input-group"><label>Tenor</label><input type="text" id="tenor" placeholder="e.g. 5 Years"></div>
+                    <div class="input-group"><label>Date of Redemption</label><input type="text" id="redemption_date" placeholder="e.g. 15-Apr-2030"></div>
+                    <div class="input-group"><label>Face Value (INR)</label><input type="text" id="face_value_inr" placeholder="e.g. 1000"></div>
+                    <div class="input-group"><label>ISIN Number</label><input type="text" id="isin" placeholder="e.g. INE134E07654"></div>
+                    <div class="input-group"><label>Mode of Issuance</label><input type="text" id="issuance_mode" placeholder="e.g. Public Issue"></div>
+                    <div class="input-group"><label>Category of Issue</label><input type="text" id="issue_category" placeholder="e.g. Retail"></div>
+                    <div class="input-group"><label>Issue Size (INR)</label><input type="text" id="issue_size_inr" placeholder="e.g. 500 Cr"></div>
+                    <div class="input-group"><label>Date of Allotment</label><input type="text" id="allotment_date" placeholder="e.g. 15-Apr-2020"></div>
+                </div>
+                <p style="font-size: 0.8em; color: #666; margin-bottom: 10px;"><em><strong>Compliance Note:</strong> Ensure all data is publicly available information. Do not publish private placement memorandums (PPM) unless authorized.</em></p>
+                <div style="display: flex; gap: 10px;">
+                    <button id="deployBtn" class="deploy-btn"><i class="fas fa-cloud-upload-alt"></i> PUBLISH TO DATABASE</button>
+                    <button id="cancelBtn" class="deploy-btn" style="background: #666; display: none;">CANCEL</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card" style="border-left: 5px solid #007f3f;">
+                <div class="dashboard-header">
+                    <h2><i class="fas fa-file-csv"></i> Bulk Upload (CSV)</h2>
+                </div>
+                <p style="margin-bottom: 15px; font-size: 0.9em; color: #666;">Upload a CSV file with headers: <code>isin, issuer_name, instrument_type, issuance_mode, issue_category, face_value_inr, issue_size_inr, allotment_date, tenor, redemption_date, coupon_rate_pct, coupon_type, payment_frequency, credit_rating, issuer_ownership_type</code></p>
+                <div style="display: flex; gap: 10px;">
+                    <input type="file" id="csvFile" accept=".csv" style="border: 1px solid #ccc; padding: 10px; flex-grow: 1;">
+                    <button id="uploadBtn" class="deploy-btn" style="width: auto; margin-top: 0;">Upload CSV</button>
+                    <button id="templateBtn" class="deploy-btn" style="width: auto; margin-top: 0; background-color: #666;"><i class="fas fa-file-download"></i> Template</button>
+                    <button id="backupBtn" class="deploy-btn" style="width: auto; margin-top: 0; background-color: #005580;"><i class="fas fa-download"></i> Backup Data</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card" style="border-left: 5px solid #cc0000;">
+                <div class="dashboard-header">
+                    <h2><i class="fas fa-key"></i> Security Settings</h2>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="password" id="newAdminPass" placeholder="New Admin Password" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; flex-grow: 1;">
+                    <button id="updatePassBtn" class="deploy-btn" style="width: auto; margin-top: 0; background-color: #cc0000;">Update Password</button>
+                </div>
+            </div>
+
+            <div class="dashboard-card" style="border-left: 5px solid #cc0000;">
+                <div class="dashboard-header">
+                    <h2 style="color: #cc0000;"><i class="fas fa-exclamation-triangle"></i> Danger Zone</h2>
+                </div>
+                <p style="margin-bottom: 15px; font-size: 0.9em; color: #666;"><strong>Warning:</strong> This action will permanently delete ALL bonds and messages. This cannot be undone.</p>
+                <button id="deleteDataBtn" class="deploy-btn" style="background-color: #cc0000; width: auto;"><i class="fas fa-bomb"></i> ERASE ALL DATA</button>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="dashboard-header">
+                    <h3>Active Data Records <span id="total-bonds-count" style="font-size: 0.7em; color: #666; font-weight: normal;"></span></h3>
+                    <div style="display: flex; gap: 5px;">
+                        <input type="text" id="adminSearch" placeholder="Search Name or ISIN..." style="padding: 6px; border: 1px solid #ccc; border-radius: 4px; width: 200px;">
+                        <button id="searchBtn" style="background: #007f3f; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;"><i class="fas fa-search"></i></button>
+                    </div>
+                </div>
+                <div class="table-container">
+                <table id="tbl">
+                    <thead>
+                        <tr>
+                            <th>Issuer</th>
+                            <th>ISIN</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbl-body"></tbody>
+                </table>
+                </div>
+                <div style="margin-top: 20px; display: flex; justify-content: center; align-items: center; gap: 15px; flex-wrap: wrap;">
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <label style="font-size: 0.9em;">Show:</label>
+                        <select id="rowsPerPage" style="padding: 5px; border-radius: 4px; border: 1px solid #ccc;">
+                            <option value="50" selected>50</option>
+                            <option value="100">100</option>
+                            <option value="500">500</option>
+                            <option value="1000">1000</option>
+                        </select>
+                    </div>
+                    <button id="prevPageBtn" class="deploy-btn" style="width: auto; padding: 8px 15px; margin: 0; background-color: #666;">&lt; Prev</button>
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <span style="font-weight: bold; color: #333;">Page</span>
+                        <input type="number" id="pageInput" value="1" min="1" style="width: 60px; padding: 5px; text-align: center; border: 1px solid #ccc; border-radius: 4px;">
+                    </div>
+                    <button id="nextPageBtn" class="deploy-btn" style="width: auto; padding: 8px 15px; margin: 0; background-color: #666;">Next &gt;</button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="site-footer">
+            <div class="container">
+                <p><strong>Internal System:</strong> This interface is for data management of the BondVault Public Educational Platform.</p>
+                <p style="margin-top: 10px;">&copy; 2025 BondVault.</p>
+            </div>
+        </footer>
+    </div>
+    </template>
+    <div id="admin-root"></div>
+
+    <!-- Inquiries Modal (Slide) -->
+    <div id="inquiries-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; overflow-y: auto;">
+        <div class="login-card modal-lg" style="margin: 5% auto; text-align: left; position: relative;">
+            <button class="close-modal-btn" data-target="inquiries-modal" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <h2 style="border-bottom: 2px solid #eee; padding-bottom: 10px;">User Inquiries</h2>
+            <button id="refreshMsgsBtn" style="background: #007f3f; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 15px;"><i class="fas fa-sync"></i> Refresh Data</button>
+            <button id="exportMsgsBtn" style="background: #005580; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; margin-bottom: 15px; margin-left: 10px;"><i class="fas fa-download"></i> Export CSV</button>
+            
+            <table class="msg-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr>
+                        <th style="padding: 10px;">Date</th>
+                        <th style="padding: 10px;">User Details</th>
+                        <th style="padding: 10px;">Message</th>
+                        <th style="padding: 10px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="messages-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bond Details Modal -->
+    <div id="bond-details-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000; overflow-y: auto;">
+        <div class="login-card modal-lg" style="margin: 5% auto; text-align: left; position: relative;">
+            <button class="close-modal-btn" data-target="bond-details-modal" style="position: absolute; top: 15px; right: 20px; background: none; border: none; font-size: 24px; cursor: pointer;">&times;</button>
+            <h2 style="border-bottom: 2px solid #eee; padding-bottom: 10px; color: #007f3f;"><i class="fas fa-info-circle"></i> Bond Details</h2>
+            
+            <div id="bond-details-grid" class="input-grid" style="margin-top: 20px;">
+                <!-- Details injected here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>

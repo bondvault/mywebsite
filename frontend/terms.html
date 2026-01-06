@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BondVault - Terms of Use</title>
+    
+    <style>
+        /* --- CSS Reset and Base Styles --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background-color: #f7f7f7; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px 15px; }
+        a { text-decoration: none; color: inherit; }
+
+        /* --- Header and Navigation Styles --- */
+        .main-header { display: flex; justify-content: space-between; align-items: center; background-color: #007f3f; color: white; padding: 10px 15px; flex-wrap: wrap; }
+        .logo-nav-container { display: flex; align-items: center; }
+        .logo { font-size: 1.5em; font-weight: bold; padding-right: 20px; white-space: nowrap; }
+        .main-nav ul { list-style: none; display: flex; padding: 0; }
+        .main-nav li { padding: 0 10px; }
+        .main-nav a { color: white; padding: 5px 10px; position: relative; display: block; border-radius: 5px; }
+        .contact-btn { background-color: white; color: #007f3f; padding: 5px 12px; border-radius: 5px; font-weight: bold; font-size: 0.9em; }
+        .main-nav a:hover { background-color: rgba(255,255,255,0.1); }
+
+        /* --- Policy Content Styles --- */
+        .policy-content { background: white; padding: 40px; border-radius: 8px; border: 1px solid #ddd; margin-top: 20px; margin-bottom: 40px; }
+        .policy-content h1 { color: #007f3f; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .policy-content h2 { color: #333; margin-top: 25px; margin-bottom: 15px; font-size: 1.4em; }
+        .policy-content p { margin-bottom: 15px; color: #555; }
+        .policy-content ul { margin-bottom: 15px; padding-left: 20px; color: #555; }
+        .policy-content li { margin-bottom: 8px; }
+
+        /* --- Footer --- */
+        .site-footer { background-color: #222; color: #fff; padding: 25px 0; font-size: 0.9em; text-align: center; margin-top: 40px; border-top: 4px solid #007f3f; }
+        .site-footer a { color: #7affc8; }
+        .site-footer p { margin-bottom: 10px; }
+
+        /* --- Modal Styles --- */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: #fefefe; margin: 10% auto; padding: 30px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 8px; position: relative; }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .modal-content h2 { color: #007f3f; margin-bottom: 15px; }
+        .modal-content label { display: block; margin-top: 10px; font-weight: bold; }
+        .modal-content input:not([type="checkbox"]), .modal-content textarea { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .modal-content .explore-btn { width: 100%; text-align: center; background-color: #007f3f; color: white; padding: 10px 20px; border-radius: 5px; font-weight: bold; border: none; cursor: pointer; }
+        .modal-content .legal-check { font-size: 0.9em; margin-top: 10px; margin-bottom: 15px; }
+        .modal-content input[type="checkbox"] { display: inline-block; width: auto; margin-right: 5px; }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <div class="logo-nav-container">
+            <div class="logo">BondVault</div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="market-data.html">Market Data</a></li>
+                    <li><a href="learning.html">Learning</a></li>
+                </ul>
+            </nav>
+        </div>
+        <a href="#" class="contact-btn" id="openContactModal">Contact Us</a>
+    </header>
+
+    <main class="container">
+        <div class="policy-content">
+            <h1>Terms of Use</h1>
+            <p><strong>Last Updated:</strong> December 24, 2025</p>
+            
+            <p>Please read these Terms of Use ("Terms") carefully before using the BondVault website (the "Service"). Your access to and use of the Service is conditioned on your acceptance of and compliance with these Terms.</p>
+
+            <h2>1. Educational Purpose Only</h2>
+            <p>BondVault is strictly an educational and research project. We are <strong>not</strong> a SEBI registered Investment Advisor, Broker, or Financial Institution. The content provided on this website is for informational purposes only and does not constitute financial, investment, or legal advice.</p>
+
+            <h2>2. Intellectual Property & Copyright</h2>
+            <p>The Service and its original content (excluding public market data), features, and functionality are and will remain the exclusive property of BondVault.</p>
+            <ul>
+                <li><strong>Website Code & Design:</strong> Copyright &copy; 2025 BondVault. All rights reserved. You may not reproduce, distribute, or create derivative works from our source code or UI design without explicit permission.</li>
+                <li><strong>Market Data:</strong> Data regarding bonds (ISIN, Coupon, Issuer Name) is aggregated from public disclosures (SEBI, NSE, BSE). We do not claim ownership of this factual data. It is presented here for educational analysis under fair use principles.</li>
+            </ul>
+
+            <h2>3. User Conduct</h2>
+            <p>By using this Service, you agree not to:</p>
+            <ul>
+                <li>Use the website for any unlawful purpose.</li>
+                <li>Attempt to gain unauthorized access to the Admin Terminal or backend systems.</li>
+                <li>Scrape or mass-download data in a manner that impacts the performance of the Service.</li>
+            </ul>
+
+            <h2>4. Limitation of Liability</h2>
+            <p>In no event shall BondVault, nor its creators, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.</p>
+
+            <h2>5. Accuracy of Data</h2>
+            <p>BondVault acts solely as an <strong>"Aggregator"</strong> of publicly available data. We do not create, audit, or validate the data provided by issuers, SEBI, or Exchanges. While we strive for accuracy, we cannot guarantee that all information is error-free or up-to-date. Users should verify all data with official regulatory filings (e.g., on the SEBI or Exchange websites) before making any decisions. We explicitly disclaim liability for any errors or omissions in the source data.</p>
+
+            <h2>6. Governing Law</h2>
+            <p>These Terms shall be governed and construed in accordance with the laws of India, without regard to its conflict of law provisions.</p>
+
+            <h2>7. Indemnification</h2>
+            <p>You agree to defend, indemnify, and hold harmless BondVault, its licensees, and licensors, and their employees, contractors, agents, officers, and directors, from and against any and all claims, damages, obligations, losses, liabilities, costs or debt, and expenses (including but not limited to attorney's fees), resulting from or arising out of a) your use and access of the Service, or b) a breach of these Terms.</p>
+
+            <h2>8. Conflict of Interest Disclosure</h2>
+            <p>BondVault is an independent platform. We do not receive compensation from issuers to feature specific bonds, nor do we hold proprietary positions in the securities displayed. Any potential conflicts will be disclosed prominently if they arise.</p>
+
+            <h2>9. Contact Us</h2>
+            <p>If you have any questions about these Terms, please contact us via the "Contact Us" button on the website.</p>
+
+            <h2>10. Risk Disclosure Statement</h2>
+            <p>Investment in debt instruments (bonds/NCDs) involves specific risks that you should understand before using this platform:</p>
+            <ul>
+                <li><strong>Credit Risk:</strong> The risk that the issuer may default on interest or principal payments. Ratings are not a guarantee of safety.</li>
+                <li><strong>Liquidity Risk:</strong> The risk that you may not be able to sell the bond easily in the secondary market before maturity.</li>
+                <li><strong>Interest Rate Risk:</strong> The risk that bond prices may fall if market interest rates rise.</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p><strong>Disclaimer:</strong> BondVault.in is a technology platform for educational purposes only and is NOT a SEBI-registered Investment Advisor, Research Analyst, or Broking entity. We do not provide investment advice or bond recommendations. All data is pulled from public sources (SEBI/Exchanges) and provided "as is" without any warranty of accuracy. BondVault.in shall not be liable for any financial losses. Past performance of bonds is not indicative of future results.</p>
+            <p style="font-weight: bold; color: #fff; margin-top: 10px; border: 1px solid #fff; padding: 10px; display: inline-block;">Investment in securities market are subject to market risks. Read all the related documents carefully before investing.</p>
+            <p style="margin-top: 5px;"><a href="terms.html">Terms of Use</a> | <a href="privacy.html">Privacy Policy</a></p>
+            <p style="margin-top: 15px;">&copy; 2025 BondVault.</p>
+        </div>
+    </footer>
+
+    <!-- Contact Modal (Reused) -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Get in Touch</h2>
+            <p>Please enter your details and we'll get back to you shortly.</p>
+            <form id="contactForm">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" required>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+
+                <label for="mobile">Mobile Number</label>
+                <input type="tel" id="mobile" name="mobile" placeholder="+91 98765 43210">
+
+                <label for="message">Your Message</label>
+                <textarea id="message" name="message" rows="4" required></textarea>
+                <div class="legal-check">
+                    <input type="checkbox" id="legalCheck" required>
+                    <label for="legalCheck">I confirm I have read and agree to the <a href="terms.html" target="_blank">Terms of Use</a> and <a href="privacy.html" target="_blank">Privacy Policy</a>.</label>
+                </div>
+                <button type="submit" class="explore-btn">Send Message</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="market-data-scripts.js"></script>
+</body>
+</html>

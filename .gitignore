@@ -1,0 +1,6 @@
+__pycache__/
+*.py[cod]
+venv/
+.vscode/
+bondvault_data.json
+.DS_Store
