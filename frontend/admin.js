@@ -1,6 +1,6 @@
 /**
  * BondVault Admin Logic
- * FINAL – RENDER COMPATIBLE – NO AUTH HEADER BUGS
+ * FINAL – MATCHES FLASK BACKEND (Authorization Header)
  */
 
 /* ================= CONFIG ================= */
@@ -10,66 +10,23 @@ const API_BONDS = `${API_BASE}/api/bonds`;
 const API_VERIFY = `${API_BASE}/api/admin/verify`;
 const API_HEALTH = `${API_BASE}/api/health`;
 
-let AUTH_KEY = sessionStorage.getItem("bv_admin_key");
+let AUTH_TOKEN = sessionStorage.getItem("bv_admin_token");
 let marketData = [];
 let currentPage = 1;
 let itemsPerPage = 50;
-let inactivityTimer;
 
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
     checkServerStatus();
-
-    if (AUTH_KEY) {
-        verifySession();
-    }
-
-    setupGlobalEvents();
-    resetTimer();
+    if (AUTH_TOKEN) verifySession();
+    bindEvents();
 });
 
 /* ================= EVENTS ================= */
 
-function setupGlobalEvents() {
-    document.body.addEventListener("click", (e) => {
-        const btn = e.target.closest("button");
-        if (!btn) return;
-
-        if (btn.id === "loginBtn") authenticate();
-        if (btn.id === "logoutBtn") logout();
-
-        if (btn.dataset.action === "view") viewBond(btn.dataset.id);
-        if (btn.dataset.action === "edit") editBond(btn.dataset.id);
-        if (btn.dataset.action === "delete") deleteBond(btn.dataset.id);
-
-        if (btn.id === "searchBtn") searchAdmin();
-        if (btn.id === "prevPageBtn") changePage(-1);
-        if (btn.id === "nextPageBtn") changePage(1);
-    });
-
-    ["mousemove", "keypress", "touchstart"].forEach(ev =>
-        document.addEventListener(ev, resetTimer)
-    );
-}
-
-/* ================= HELPERS ================= */
-
-function escapeHtml(text) {
-    return text == null ? "" : String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-}
-
-function resetTimer() {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => {
-        if (AUTH_KEY) {
-            alert("Session expired");
-            logout();
-        }
-    }, 15 * 60 * 1000);
+function bindEvents() {
+    document.getElementById("loginBtn")?.addEventListener("click", authenticate);
 }
 
 /* ================= SERVER ================= */
@@ -78,10 +35,10 @@ async function checkServerStatus() {
     try {
         const r = await fetch(API_HEALTH);
         if (r.ok) {
-            const stat = document.getElementById("stat");
-            if (stat) {
-                stat.textContent = "● LIVE";
-                stat.className = "status-badge status-live";
+            const s = document.getElementById("stat");
+            if (s) {
+                s.textContent = "● LIVE";
+                s.className = "status-badge status-live";
             }
         }
     } catch {}
@@ -92,21 +49,22 @@ async function checkServerStatus() {
 async function authenticate() {
     const key = document.getElementById("adminKey").value.trim();
     const err = document.getElementById("loginError");
+    err.style.display = "none";
 
     if (!key) return;
 
+    const token = `Bearer ${key}`;
+
     try {
         const r = await fetch(API_VERIFY, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ admin_key: key })
+            headers: { Authorization: token }
         });
 
         if (!r.ok) throw new Error();
 
-        AUTH_KEY = key;
-        sessionStorage.setItem("bv_admin_key", key);
-        renderAdminPanel();
+        AUTH_TOKEN = token;
+        sessionStorage.setItem("bv_admin_token", token);
+        loadAdminUI();
 
     } catch {
         err.style.display = "block";
@@ -114,16 +72,12 @@ async function authenticate() {
 }
 
 async function verifySession() {
-    if (!AUTH_KEY) return;
-
     try {
         const r = await fetch(API_VERIFY, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ admin_key: AUTH_KEY })
+            headers: { Authorization: AUTH_TOKEN }
         });
 
-        if (r.ok) renderAdminPanel();
+        if (r.ok) loadAdminUI();
         else logout();
     } catch {
         logout();
@@ -131,121 +85,49 @@ async function verifySession() {
 }
 
 function logout() {
-    sessionStorage.removeItem("bv_admin_key");
-    AUTH_KEY = null;
-    marketData = [];
+    sessionStorage.removeItem("bv_admin_token");
     location.reload();
 }
 
 /* ================= UI ================= */
 
-function renderAdminPanel() {
-    const tpl = document.getElementById("admin-template");
-    const root = document.getElementById("admin-root");
-    if (!tpl || !root) return;
-
-    root.innerHTML = "";
-    root.appendChild(tpl.content.cloneNode(true));
-
-    const overlay = document.getElementById("login-overlay");
-    if (overlay) overlay.style.display = "none";
-
+function loadAdminUI() {
+    document.getElementById("login-overlay").style.display = "none";
+    document.getElementById("admin-root")
+        .appendChild(document.getElementById("admin-template").content.cloneNode(true));
     loadBonds();
 }
 
 /* ================= DATA ================= */
 
-async function loadBonds(search = "") {
+async function loadBonds() {
     try {
-        let url = `${API_BONDS}?page=${currentPage}&limit=${itemsPerPage}`;
-        if (search) url += `&search=${encodeURIComponent(search)}`;
-
-        const r = await fetch(url);
-        if (!r.ok) throw new Error();
+        const r = await fetch(API_BONDS, {
+            headers: { Authorization: AUTH_TOKEN }
+        });
 
         const data = await r.json();
         marketData = Array.isArray(data) ? data : [];
-
         renderTable();
+
     } catch {
         renderError("Backend not reachable");
     }
 }
 
 function renderTable() {
-    const tbody = document.getElementById("tbl-body");
-    if (!tbody) return;
-
-    if (!marketData.length) {
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center">No data found</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = marketData.map(b => `
-        <tr>
-            <td>
-                <strong>${escapeHtml(b.issuer_name)}</strong><br>
-                <small>${escapeHtml(b.credit_rating || "")}</small>
-            </td>
-            <td>${escapeHtml(b.isin || "N/A")}</td>
-            <td>
-                <button data-action="view" data-id="${b.id}">View</button>
-                <button data-action="edit" data-id="${b.id}">Edit</button>
-                <button data-action="delete" data-id="${b.id}">Delete</button>
-            </td>
-        </tr>
-    `).join("");
+    const body = document.getElementById("tbl-body");
+    body.innerHTML = marketData.length
+        ? marketData.map(b => `
+            <tr>
+                <td>${b.issuer_name}</td>
+                <td>${b.isin}</td>
+                <td>OK</td>
+            </tr>`).join("")
+        : `<tr><td colspan="3">No data</td></tr>`;
 }
 
 function renderError(msg) {
-    const tbody = document.getElementById("tbl-body");
-    if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="3" style="color:red;text-align:center">${escapeHtml(msg)}</td></tr>`;
-    }
+    document.getElementById("tbl-body").innerHTML =
+        `<tr><td colspan="3" style="color:red">${msg}</td></tr>`;
 }
-
-/* ================= CRUD ================= */
-
-function editBond(id) {
-    const bond = marketData.find(b => String(b.id) === String(id));
-    if (!bond) return;
-
-    Object.keys(bond).forEach(k => {
-        const el = document.getElementById(k);
-        if (el && "value" in el) el.value = bond[k];
-    });
-}
-
-async function deleteBond(id) {
-    if (!confirm("Delete this bond?")) return;
-
-    try {
-        const r = await fetch(`${API_BONDS}/${id}`, { method: "DELETE" });
-        if (!r.ok) throw new Error();
-        loadBonds();
-    } catch {
-        renderError("Delete failed");
-    }
-}
-
-function viewBond(id) {
-    const b = marketData.find(x => String(x.id) === String(id));
-    if (!b) return;
-
-    alert(
-        `Issuer: ${b.issuer_name}\nISIN: ${b.isin}\nRating: ${b.credit_rating || "N/A"}`
-    );
-}
-
-/* ================= SEARCH + PAGINATION ================= */
-
-function searchAdmin() {
-    currentPage = 1;
-    const q = document.getElementById("adminSearch")?.value || "";
-    loadBonds(q);
-}
-
-function changePage(delta) {
-    currentPage = Math.max(1, currentPage + delta);
-    searchAdmin();
-        }
