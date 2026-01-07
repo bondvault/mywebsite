@@ -6,10 +6,7 @@
 /* ================= CONFIG ================= */
 
 const API_BASE =
-    (location.hostname === "localhost" ||
-     location.hostname === "127.0.0.1")
-        ? "http://127.0.0.1:5000"
-        : "https://mywebsite-iopi.onrender.com";
+    "https://mywebsite-iopi.onrender.com";
 
 const API = `${API_BASE}/api/bonds`;
 
