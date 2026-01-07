@@ -1,6 +1,6 @@
 /**
  * BondVault Admin Logic
- * STABLE + RENDER DEPLOYMENT FIXED
+ * FINAL – RENDER + FLASK COMPATIBLE
  */
 
 /* ================= CONFIG ================= */
@@ -48,20 +48,12 @@ function setupGlobalEvents() {
         if (btn.id === "nextPageBtn") changePage(1);
     });
 
-    // also listen for touch on mobile
-    document.addEventListener("touchstart", resetTimer);
     document.addEventListener("mousemove", resetTimer);
     document.addEventListener("keypress", resetTimer);
+    document.addEventListener("touchstart", resetTimer);
 }
 
 /* ================= HELPERS ================= */
-
-function escapeHtml(text) {
-    return text == null ? "" : String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-}
 
 function resetTimer() {
     clearTimeout(inactivityTimer);
@@ -73,35 +65,45 @@ function resetTimer() {
     }, 15 * 60 * 1000);
 }
 
+function escapeHtml(text) {
+    return text == null ? "" : String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+}
+
 /* ================= SERVER ================= */
 
 async function checkServerStatus() {
     try {
         const r = await fetch(API_HEALTH);
-        if (r.ok) {
-            const stat = document.getElementById("stat");
-            if (stat) {
-                stat.textContent = "● LIVE";
-                stat.className = "status-badge status-live";
-            }
+        if (!r.ok) throw new Error();
+
+        const stat = document.getElementById("stat");
+        if (stat) {
+            stat.textContent = "● CONNECTED";
+            stat.className = "status-badge status-live";
         }
-    } catch (err) {
-        // network error — log for diagnostics
-        console.debug("checkServerStatus failed:", err && err.message);
+    } catch {
+        const stat = document.getElementById("stat");
+        if (stat) {
+            stat.textContent = "● OFFLINE";
+            stat.className = "status-badge status-dead";
+        }
     }
 }
 
 async function verifySession() {
-    if (!AUTH_TOKEN) return;
-
     try {
         const r = await fetch(API_VERIFY, {
-            headers: { Authorization: AUTH_TOKEN }
+            headers: {
+                "X-ADMIN-KEY": AUTH_TOKEN
+            }
         });
-        if (r.ok) renderAdminPanel();
-        else logout();
-    } catch (err) {
-        console.debug("verifySession failed:", err && err.message);
+
+        if (!r.ok) throw new Error();
+        renderAdminPanel();
+    } catch {
         logout();
     }
 }
@@ -112,32 +114,31 @@ async function authenticate() {
     const keyInput = document.getElementById("adminKey");
     const errorBox = document.getElementById("loginError");
 
-    if (!keyInput || !keyInput.value) return;
+    if (!keyInput || !keyInput.value.trim()) return;
 
-    const token = "Bearer " + btoa(keyInput.value.trim());
+    const key = keyInput.value.trim();
 
     try {
         const r = await fetch(API_VERIFY, {
-            headers: { Authorization: token }
+            headers: {
+                "X-ADMIN-KEY": key
+            }
         });
 
-        if (!r.ok) throw new Error("Invalid credentials");
+        if (!r.ok) throw new Error();
 
-        AUTH_TOKEN = token;
-        sessionStorage.setItem("bv_admin_token", token);
+        AUTH_TOKEN = key;
+        sessionStorage.setItem("bv_admin_token", key);
         renderAdminPanel();
 
-    } catch (err) {
+    } catch {
         if (errorBox) errorBox.style.display = "block";
-        console.debug("authenticate failed:", err && err.message);
     }
 }
 
 function logout() {
     sessionStorage.removeItem("bv_admin_token");
-    // clear local state
     AUTH_TOKEN = null;
-    marketData = [];
     location.reload();
 }
 
@@ -165,18 +166,16 @@ async function loadBonds(search = "") {
         if (search) url += `&search=${encodeURIComponent(search)}`;
 
         const r = await fetch(url, {
-            headers: { Authorization: AUTH_TOKEN }
+            headers: {
+                "X-ADMIN-KEY": AUTH_TOKEN
+            }
         });
 
-        if (!r.ok) throw new Error(`API responded ${r.status}`);
-
-        const data = await r.json();
-        marketData = Array.isArray(data) ? data : [];
-
+        if (!r.ok) throw new Error();
+        marketData = await r.json();
         renderTable();
-    } catch (err) {
-        console.debug("loadBonds failed:", err && err.message);
-        renderError("Backend not reachable");
+    } catch {
+        renderError("Backend connection failed");
     }
 }
 
@@ -184,17 +183,14 @@ function renderTable() {
     const tbody = document.getElementById("tbl-body");
     if (!tbody) return;
 
-    if (marketData.length === 0) {
+    if (!marketData.length) {
         tbody.innerHTML = `<tr><td colspan="3" style="text-align:center">No data found</td></tr>`;
         return;
     }
 
     tbody.innerHTML = marketData.map(b => `
         <tr>
-            <td>
-                <strong>${escapeHtml(b.issuer_name)}</strong><br>
-                <small>${escapeHtml(b.credit_rating || "")}</small>
-            </td>
+            <td><strong>${escapeHtml(b.issuer_name)}</strong></td>
             <td>${escapeHtml(b.isin || "N/A")}</td>
             <td>
                 <button data-action="view" data-id="${b.id}">View</button>
@@ -214,46 +210,37 @@ function renderError(msg) {
 
 /* ================= CRUD ================= */
 
+function viewBond(id) {
+    const bond = marketData.find(b => String(b.id) === String(id));
+    if (!bond) return;
+
+    alert(`Issuer: ${bond.issuer_name}\nISIN: ${bond.isin}`);
+}
+
 function editBond(id) {
     const bond = marketData.find(b => String(b.id) === String(id));
     if (!bond) return;
 
     Object.keys(bond).forEach(k => {
         const el = document.getElementById(k);
-        if (!el) return;
-        // prefer value for form controls, otherwise set textContent
-        if ("value" in el) el.value = bond[k];
-        else el.textContent = bond[k];
+        if (el && "value" in el) el.value = bond[k];
     });
 }
 
 async function deleteBond(id) {
     if (!confirm("Delete this bond?")) return;
 
-    try {
-        const r = await fetch(`${API_BONDS}/${id}`, {
-            method: "DELETE",
-            headers: { Authorization: AUTH_TOKEN }
-        });
+    await fetch(`${API_BONDS}/${id}`, {
+        method: "DELETE",
+        headers: {
+            "X-ADMIN-KEY": AUTH_TOKEN
+        }
+    });
 
-        if (!r.ok) throw new Error(`Delete failed ${r.status}`);
-        await loadBonds();
-    } catch (err) {
-        console.debug("deleteBond failed:", err && err.message);
-        renderError("Failed to delete bond");
-    }
+    loadBonds();
 }
 
-function viewBond(id) {
-    const bond = marketData.find(b => String(b.id) === String(id));
-    if (!bond) return;
-
-    alert(
-        `Issuer: ${bond.issuer_name}\nISIN: ${bond.isin}\nRating: ${bond.credit_rating || "N/A"}`
-    );
-}
-
-/* ================= SEARCH + PAGINATION ================= */
+/* ================= SEARCH ================= */
 
 function searchAdmin() {
     currentPage = 1;
