@@ -1,25 +1,24 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
-from werkzeug.security import check_password_hash
+from werkzeug.security import generate_password_hash, check_password_hash
+import uuid
+import datetime
 import json
 import os
+import csv
+import io
 import base64
 
 app = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# ===============================
-# CONFIG (DO NOT REHASH PASSWORD)
-# ===============================
+# ================= CONFIG =================
 
-# SET THIS IN RENDER ENVIRONMENT
-# ADMIN_PASSWORD=your_secret_key
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-
 DATA_FILE = "bond_data.json"
 
 # ===============================
-# DATA LOADING
+# DATA LOADING (FIXED FOR LIST)
 # ===============================
 
 def load_data():
@@ -28,54 +27,48 @@ def load_data():
             with open(DATA_FILE, "r") as f:
                 data = json.load(f)
                 if isinstance(data, list):
-                    return data
-                if isinstance(data, dict) and "bonds" in data:
-                    return data["bonds"]
+                    return {"bonds": data, "messages": []}
+                return data
         except:
             pass
-    return []
+    return {"bonds": [], "messages": []}
 
-bonds_db = load_data()
+def save_data():
+    with open(DATA_FILE, "w") as f:
+        json.dump({"bonds": bonds_db, "messages": messages_db}, f, indent=2)
 
-# ===============================
-# HEALTH CHECK
-# ===============================
+db = load_data()
+bonds_db = db.get("bonds", [])
+messages_db = db.get("messages", [])
+
+# ================= HEALTH =================
 
 @app.route("/api/health", methods=["GET"])
 def health_check():
-    return jsonify({
-        "message": "✅ BondVault Backend is LIVE",
-        "bonds": "/api/bonds",
-        "health": "/api/health"
-    }), 200
+    return jsonify({"status": "online"}), 200
 
-# ===============================
-# ADMIN VERIFY (FIXED)
-# ===============================
+# ================= ADMIN VERIFY (FIXED) =================
 
 @app.route("/api/admin/verify", methods=["GET"])
 def verify_admin():
     auth = request.headers.get("Authorization")
-
     if not auth:
-        return jsonify({"error": "Missing Authorization"}), 401
+        return jsonify({"error": "Missing Token"}), 401
 
     try:
-        # Frontend sends: Bearer base64(password)
-        token = auth.replace("Bearer", "").strip()
+        token = auth.replace("Bearer ", "")
         decoded = base64.b64decode(token).decode("utf-8")
 
+        # ✅ DIRECT PASSWORD MATCH (STABLE)
         if decoded == ADMIN_PASSWORD:
             return jsonify({"status": "authorized"}), 200
 
         return jsonify({"error": "Invalid Key"}), 403
 
-    except Exception as e:
+    except Exception:
         return jsonify({"error": "Token Error"}), 401
 
-# ===============================
-# GET BONDS
-# ===============================
+# ================= BONDS =================
 
 @app.route("/api/bonds", methods=["GET"])
 def get_bonds():
@@ -92,12 +85,9 @@ def get_bonds():
 
     start = (page - 1) * limit
     end = start + limit
-
     return jsonify(filtered[start:end]), 200
 
-# ===============================
-# RUN
-# ===============================
+# ================= RUN =================
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
