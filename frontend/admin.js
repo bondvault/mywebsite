@@ -1,16 +1,15 @@
 /**
  * BondVault Admin Logic
- * FINAL FIXED VERSION
+ * FIXED LOGIN + RENDER DEPLOYMENT VERSION
  */
 
 /* ================= CONFIG ================= */
 
 const API_BASE =
-    (window.location.hostname === "127.0.0.1" ||
-     window.location.hostname === "localhost" ||
-     window.location.protocol === "file:")
+    (location.hostname === "localhost" ||
+     location.hostname === "127.0.0.1")
         ? "http://127.0.0.1:5000"
-        : "https://mywebsite-iopi.onrender.com"; // ✅ FIXED HERE
+        : "https://mywebsite-iopi.onrender.com";
 
 const API = `${API_BASE}/api/bonds`;
 
@@ -24,12 +23,35 @@ let inactivityTimer;
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-    attachGlobalListeners();
     checkServerStatus();
     if (AUTH_TOKEN) verifySession();
     resetTimer();
     document.onmousemove = resetTimer;
     document.onkeypress = resetTimer;
+});
+
+/* ================= GLOBAL CLICK FIX (CRITICAL) ================= */
+
+document.addEventListener("click", (e) => {
+
+    if (e.target && e.target.id === "loginBtn") {
+        authenticate();
+    }
+
+    if (e.target && e.target.id === "logoutBtn") {
+        logout();
+    }
+
+    const btn = e.target.closest("button");
+    if (!btn) return;
+
+    if (btn.dataset.action === "view") viewBond(btn.dataset.id);
+    if (btn.dataset.action === "edit") editBond(btn.dataset.id);
+    if (btn.dataset.action === "delete") del(btn.dataset.id);
+
+    if (btn.id === "searchBtn") searchAdmin();
+    if (btn.id === "prevPageBtn") changePage(-1);
+    if (btn.id === "nextPageBtn") changePage(1);
 });
 
 /* ================= HELPERS ================= */
@@ -58,7 +80,14 @@ function resetTimer() {
 
 async function checkServerStatus() {
     try {
-        await fetch(`${API_BASE}/api/health`);
+        const r = await fetch(`${API_BASE}/api/health`);
+        if (r.ok) {
+            const stat = document.getElementById("stat");
+            if (stat) {
+                stat.textContent = "● LIVE";
+                stat.className = "status-badge status-live";
+            }
+        }
     } catch (_) {}
 }
 
@@ -77,7 +106,7 @@ async function verifySession() {
 /* ================= AUTH ================= */
 
 async function authenticate() {
-    const key = document.getElementById("adminKey").value;
+    const key = document.getElementById("adminKey")?.value;
     if (!key) return;
 
     const token = "Bearer " + btoa(key);
@@ -92,6 +121,7 @@ async function authenticate() {
         AUTH_TOKEN = token;
         sessionStorage.setItem("bv_admin_token", token);
         renderAdminPanel();
+
     } catch {
         document.getElementById("loginError").style.display = "block";
     }
@@ -103,28 +133,6 @@ function logout() {
 }
 
 /* ================= UI ================= */
-
-function attachGlobalListeners() {
-    const loginBtn = document.getElementById("loginBtn");
-    if (loginBtn) loginBtn.addEventListener("click", authenticate);
-
-    document.body.addEventListener("click", (e) => {
-        const btn = e.target.closest("button");
-        if (!btn) return;
-
-        if (btn.dataset.action === "view") viewBond(btn.dataset.id);
-        if (btn.dataset.action === "edit") editBond(btn.dataset.id);
-        if (btn.dataset.action === "delete") del(btn.dataset.id);
-
-        if (btn.id === "searchBtn") searchAdmin();
-        if (btn.id === "prevPageBtn") changePage(-1);
-        if (btn.id === "nextPageBtn") changePage(1);
-    });
-
-    document.body.addEventListener("input", (e) => {
-        if (e.target.id === "adminSearch") debouncedAdminSearch();
-    });
-}
 
 function renderAdminPanel() {
     const tpl = document.getElementById("admin-template");
@@ -147,16 +155,19 @@ async function refresh(searchQuery = "") {
             headers: { Authorization: AUTH_TOKEN }
         });
 
-        if (!r.ok) throw new Error("API failed");
+        if (!r.ok) throw new Error();
 
         const d = await r.json();
         marketData = Array.isArray(d) ? d : [];
 
         const tbody = document.getElementById("tbl-body");
+        if (!tbody) return;
 
         if (marketData.length === 0) {
             tbody.innerHTML =
-                `<tr><td colspan="3" style="text-align:center;padding:20px;">No data found</td></tr>`;
+                `<tr><td colspan="3" style="text-align:center;padding:20px;">
+                No data found
+                </td></tr>`;
             return;
         }
 
@@ -175,8 +186,7 @@ async function refresh(searchQuery = "") {
             </tr>
         `).join("");
 
-    } catch (e) {
-        console.error(e);
+    } catch {
         document.getElementById("tbl-body").innerHTML =
             `<tr><td colspan="3" style="color:red;text-align:center;">
             Backend not reachable
