@@ -1,232 +1,81 @@
-// c:\Users\Administrator\.vscode\mywebsite\frontend\market-data-scripts.js
+// frontend/market-data-scripts.js
 
-// CONFIGURATION
 const API_DOMAIN =
-    window.location.hostname === "127.0.0.1" ||
-    window.location.hostname === "localhost" ||
-    window.location.protocol === "file:"
-        ? "http://127.0.0.1:5000"
-        : "https://bondvault-api.onrender.com";
+  window.location.hostname === "127.0.0.1" ||
+  window.location.hostname === "localhost"
+    ? "http://127.0.0.1:5000"
+    : "https://bondvault-api.onrender.com";
 
 const API_URL = `${API_DOMAIN}/api/bonds`;
 
-document.addEventListener('DOMContentLoaded', () => {
-    setupContactModal();
+document.addEventListener("DOMContentLoaded", () => {
+  const container = document.getElementById("bonds-container");
 
-    const container = document.getElementById('bonds-container');
-    if (container) {
-        container.innerHTML =
-            '<p style="text-align:center; padding:40px; color:#666;"><i class="fas fa-spinner fa-spin"></i> Loading Market Data...</p>';
+  if (container) {
+    const isHome =
+      window.location.pathname.endsWith("/") ||
+      window.location.pathname.includes("index.html");
 
-        const isHome =
-            window.location.pathname.includes('index.html') ||
-            window.location.pathname.endsWith('/');
+    fetchBonds(container, "", isHome ? 3 : 50);
+  }
 
-        fetchBonds(container, '', isHome ? 3 : 50);
-    }
+  const searchBtn = document.querySelector(".search-btn");
+  const searchInput = document.getElementById("bonds-search");
 
-    const searchBtn = document.querySelector('.search-btn');
-    const searchInput = document.getElementById('bonds-search');
-    if (searchBtn && searchInput) {
-        searchBtn.addEventListener('click', () =>
-            fetchBonds(container, searchInput.value)
-        );
-        searchInput.addEventListener('keyup', e => {
-            if (e.key === 'Enter')
-                fetchBonds(container, searchInput.value);
-        });
-    }
+  if (searchBtn && searchInput) {
+    searchBtn.onclick = () =>
+      fetchBonds(container, searchInput.value, 50);
 
-    const applyFilterBtn = document.querySelector('.apply-filters');
-    if (applyFilterBtn) {
-        applyFilterBtn.addEventListener('click', () => {
-            const filters = {
-                issuer: Array.from(
-                    document.querySelectorAll('input[name="issuer"]:checked')
-                ).map(cb => cb.value),
-                maturity: Array.from(
-                    document.querySelectorAll('input[name="maturity"]:checked')
-                ).map(cb => cb.value),
-                agency: Array.from(
-                    document.querySelectorAll('input[name="agency"]:checked')
-                ).map(cb => cb.value)
-            };
-            fetchBonds(container, '', 50, filters);
-        });
-    }
+    searchInput.onkeyup = (e) => {
+      if (e.key === "Enter")
+        fetchBonds(container, searchInput.value, 50);
+    };
+  }
 });
 
-// ---------------- DATA FETCH ----------------
+async function fetchBonds(container, search = "", limit = 50) {
+  try {
+    container.innerHTML =
+      '<p style="text-align:center">Loading bonds...</p>';
 
-async function fetchBonds(container, searchQuery = '', limit = 50, filters = {}) {
-    try {
-        if (searchQuery || Object.keys(filters).length > 0) {
-            container.innerHTML =
-                '<p style="text-align:center; padding:20px;">Searching Vault...</p>';
-        }
+    let url = `${API_URL}?limit=${limit}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
 
-        let url = `${API_URL}?limit=${limit}`;
-        if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("API Error");
 
-        if (filters.issuer)
-            filters.issuer.forEach(v => (url += `&issuer=${encodeURIComponent(v)}`));
-        if (filters.maturity)
-            filters.maturity.forEach(v => (url += `&maturity=${encodeURIComponent(v)}`));
-        if (filters.agency)
-            filters.agency.forEach(v => (url += `&agency=${encodeURIComponent(v)}`));
-
-        const response = await fetch(url);
-        if (!response.ok) throw new Error("API Offline");
-
-        const bonds = await response.json();
-        renderBonds(bonds, container);
-    } catch (error) {
-        console.error(error);
-        container.innerHTML = `
-            <div class="no-results" style="text-align:center; color:red; padding:20px; border:1px solid red; border-radius:5px;">
-                <strong>System Offline</strong><br>
-                Could not connect to BondVault Server.
-            </div>`;
-    }
-}
-
-// ---------------- RENDER ----------------
-
-function escapeHtml(text) {
-    if (text == null) return '';
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    const bonds = await res.json();
+    renderBonds(bonds, container);
+  } catch (e) {
+    container.innerHTML =
+      "<p style='color:red;text-align:center'>Server not reachable</p>";
+  }
 }
 
 function renderBonds(bonds, container) {
-    container.innerHTML = '';
+  container.innerHTML = "";
 
-    if (!bonds || bonds.length === 0) {
-        container.innerHTML =
-            '<div class="no-results">No bonds found matching your criteria.</div>';
-        return;
-    }
+  if (!bonds || bonds.length === 0) {
+    container.innerHTML =
+      "<p style='text-align:center'>No bonds found</p>";
+    return;
+  }
 
-    bonds.forEach(bond => {
-        const card = document.createElement('div');
-        card.className = 'detailed-bond-card';
+  bonds.forEach((bond) => {
+    const div = document.createElement("div");
+    div.className = "detailed-bond-card";
 
-        card.innerHTML = `
-            <div class="card-header">
-                <h3>
-                    ${escapeHtml(bond.name || bond.issuer_name || 'Unknown Issuer')}
-                    <span style="font-size:0.7em; color:#666;">
-                        ${escapeHtml(bond.issuer_type || bond.issuer_ownership_type || 'N/A')}
-                    </span>
-                </h3>
-                <span style="font-size:0.8em;">
-                    ${escapeHtml(bond.isin || '')}
-                </span>
-            </div>
-
-            <div class="bond-attributes">
-                <div class="bond-attribute">
-                    Credit Rating
-                    <span>${escapeHtml(bond.rating || bond.credit_rating || '-')}</span>
-                </div>
-                <div class="bond-attribute">
-                    Coupon Rate
-                    <span>${escapeHtml(bond.coupon || bond.coupon_rate_pct || '-')}</span>
-                </div>
-                <div class="bond-attribute">
-                    Issue Date
-                    <span>${escapeHtml(bond.allotment_date || '-')}</span>
-                </div>
-                <div class="bond-attribute">
-                    Maturity Date
-                    <span>${escapeHtml(bond.maturity || bond.redemption_date || '-')}</span>
-                </div>
-                <div class="bond-attribute">
-                    Face Value
-                    <span>${escapeHtml(bond.face_value || bond.face_value_inr || '-')}</span>
-                </div>
-                <div class="bond-attribute">
-                    Issue Size
-                    <span>${escapeHtml(bond.issue_size || bond.issue_size_inr || '-')}</span>
-                </div>
-            </div>
-
-            <button class="view-more-btn"
-                onclick="openDetails(this)"
-                data-bond='${JSON.stringify(bond).replace(/'/g, "&#39;")}'>
-                View Details
-            </button>
-        `;
-
-        container.appendChild(card);
-    });
-}
-
-// ---------------- MODAL ----------------
-
-function openDetails(btn) {
-    const bond = JSON.parse(btn.getAttribute('data-bond'));
-    const modal = document.getElementById('detailsModal');
-    const title = document.getElementById('detailsModalTitle');
-    const body = document.querySelector('.details-modal-body');
-
-    if (!modal) return;
-
-    title.innerText = bond.issuer_name || bond.name || '';
-    body.innerHTML = `
-        <div><b>ISIN:</b> ${escapeHtml(bond.isin)}</div>
-        <div><b>Credit Rating:</b> ${escapeHtml(bond.credit_rating)}</div>
-        <div><b>Coupon:</b> ${escapeHtml(bond.coupon_rate_pct)}</div>
-        <div><b>Maturity:</b> ${escapeHtml(bond.redemption_date)}</div>
+    div.innerHTML = `
+      <h3>${bond.issuer_name}</h3>
+      <p><b>ISIN:</b> ${bond.isin}</p>
+      <p><b>Credit Rating:</b> ${bond.credit_rating || "-"}</p>
+      <p><b>Coupon Rate:</b> ${bond.coupon_rate_pct || "-"}%</p>
+      <p><b>Allotment Date:</b> ${bond.allotment_date || "-"}</p>
+      <p><b>Maturity Date:</b> ${bond.redemption_date || "-"}</p>
+      <p><b>Face Value:</b> ₹${bond.face_value_inr || "-"}</p>
+      <p><b>Issue Size:</b> ₹${bond.issue_size_inr || "-"}</p>
     `;
 
-    modal.style.display = "block";
-    window.onclick = e => {
-        if (e.target === modal) modal.style.display = "none";
-    };
-}
-
-// ---------------- CONTACT MODAL ----------------
-
-function setupContactModal() {
-    const modal = document.getElementById("contactModal");
-    const openBtns = document.querySelectorAll(".contact-btn, #openContactModal");
-    const closeBtn = document.querySelector("#contactModal .close-btn");
-    const contactForm = document.getElementById("contactForm");
-
-    if (!modal || !contactForm) return;
-
-    openBtns.forEach(btn =>
-        btn.addEventListener('click', e => {
-            e.preventDefault();
-            modal.style.display = "block";
-        })
-    );
-
-    closeBtn.onclick = () => (modal.style.display = "none");
-
-    contactForm.addEventListener('submit', async e => {
-        e.preventDefault();
-
-        const formData = {
-            name: name.value,
-            email: email.value,
-            mobile: mobile.value,
-            message: message.value
-        };
-
-        await fetch(`${API_DOMAIN}/api/contact`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(formData)
-        });
-
-        alert("Message sent");
-        contactForm.reset();
-        modal.style.display = "none";
-    });
+    container.appendChild(div);
+  });
 }
