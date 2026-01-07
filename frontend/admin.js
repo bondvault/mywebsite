@@ -18,7 +18,7 @@ let inactivityTimer;
 
 /* ================= INIT ================= */
 
-documentdocument.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
     checkServerStatus();
 
     if (AUTH_TOKEN) {
@@ -48,6 +48,8 @@ function setupGlobalEvents() {
         if (btn.id === "nextPageBtn") changePage(1);
     });
 
+    // also listen for touch on mobile
+    document.addEventListener("touchstart", resetTimer);
     document.addEventListener("mousemove", resetTimer);
     document.addEventListener("keypress", resetTimer);
 }
@@ -83,17 +85,23 @@ async function checkServerStatus() {
                 stat.className = "status-badge status-live";
             }
         }
-    } catch {}
+    } catch (err) {
+        // network error — log for diagnostics
+        console.debug("checkServerStatus failed:", err && err.message);
+    }
 }
 
 async function verifySession() {
+    if (!AUTH_TOKEN) return;
+
     try {
         const r = await fetch(API_VERIFY, {
             headers: { Authorization: AUTH_TOKEN }
         });
         if (r.ok) renderAdminPanel();
         else logout();
-    } catch {
+    } catch (err) {
+        console.debug("verifySession failed:", err && err.message);
         logout();
     }
 }
@@ -113,19 +121,23 @@ async function authenticate() {
             headers: { Authorization: token }
         });
 
-        if (!r.ok) throw new Error();
+        if (!r.ok) throw new Error("Invalid credentials");
 
         AUTH_TOKEN = token;
         sessionStorage.setItem("bv_admin_token", token);
         renderAdminPanel();
 
-    } catch {
+    } catch (err) {
         if (errorBox) errorBox.style.display = "block";
+        console.debug("authenticate failed:", err && err.message);
     }
 }
 
 function logout() {
     sessionStorage.removeItem("bv_admin_token");
+    // clear local state
+    AUTH_TOKEN = null;
+    marketData = [];
     location.reload();
 }
 
@@ -156,13 +168,14 @@ async function loadBonds(search = "") {
             headers: { Authorization: AUTH_TOKEN }
         });
 
-        if (!r.ok) throw new Error();
+        if (!r.ok) throw new Error(`API responded ${r.status}`);
 
         const data = await r.json();
         marketData = Array.isArray(data) ? data : [];
 
         renderTable();
-    } catch {
+    } catch (err) {
+        console.debug("loadBonds failed:", err && err.message);
         renderError("Backend not reachable");
     }
 }
@@ -195,7 +208,7 @@ function renderTable() {
 function renderError(msg) {
     const tbody = document.getElementById("tbl-body");
     if (tbody) {
-        tbody.innerHTML = `<tr><td colspan="3" style="color:red;text-align:center">${msg}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" style="color:red;text-align:center">${escapeHtml(msg)}</td></tr>`;
     }
 }
 
@@ -207,19 +220,28 @@ function editBond(id) {
 
     Object.keys(bond).forEach(k => {
         const el = document.getElementById(k);
-        if (el) el.value = bond[k];
+        if (!el) return;
+        // prefer value for form controls, otherwise set textContent
+        if ("value" in el) el.value = bond[k];
+        else el.textContent = bond[k];
     });
 }
 
 async function deleteBond(id) {
     if (!confirm("Delete this bond?")) return;
 
-    await fetch(`${API_BONDS}/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: AUTH_TOKEN }
-    });
+    try {
+        const r = await fetch(`${API_BONDS}/${id}`, {
+            method: "DELETE",
+            headers: { Authorization: AUTH_TOKEN }
+        });
 
-    loadBonds();
+        if (!r.ok) throw new Error(`Delete failed ${r.status}`);
+        await loadBonds();
+    } catch (err) {
+        console.debug("deleteBond failed:", err && err.message);
+        renderError("Failed to delete bond");
+    }
 }
 
 function viewBond(id) {
