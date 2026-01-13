@@ -3,7 +3,7 @@
 const API_BASE =
   location.hostname === "localhost" || location.hostname === "127.0.0.1"
     ? "http://127.0.0.1:5000"
-    : "https://bondvault-api.onrender.com";
+    : "https://mywebsite-iopi.onrender.com";
 
 const API_VERIFY = `${API_BASE}/api/admin/verify`;
 const API_BONDS = `${API_BASE}/api/bonds`;
@@ -32,7 +32,7 @@ async function checkHealth() {
   try {
     await fetch(API_HEALTH);
   } catch {
-    showError("Backend not running");
+    showError("Backend not reachable");
   }
 }
 
@@ -62,7 +62,7 @@ async function login(e) {
   }
 }
 
-/* ================= SESSION VALIDATION ================= */
+/* ================= SESSION CHECK ================= */
 
 async function validateAndLoad() {
   try {
@@ -73,6 +73,7 @@ async function validateAndLoad() {
     if (res.status === 401) {
       sessionStorage.removeItem("bv_admin_token");
       token = null;
+      alert("Session expired. Please login again.");
       return;
     }
 
