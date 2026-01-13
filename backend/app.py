@@ -14,6 +14,7 @@ JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret")
 ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
 ADMIN_PASS = os.environ.get("ADMIN_PASS", "password")
 
+# Allow frontend access (local + Netlify)
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 DB_FILE = "bonds.db"
@@ -64,6 +65,7 @@ def health():
 @app.route("/api/admin/verify", methods=["POST"])
 def verify_admin():
     data = request.json or {}
+
     if data.get("username") != ADMIN_USER or data.get("password") != ADMIN_PASS:
         return jsonify({"error": "Invalid credentials"}), 401
 
