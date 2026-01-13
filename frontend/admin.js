@@ -1,55 +1,44 @@
-/**
- * BondVault Admin Logic
- * FINAL – PERFECT MATCH WITH FLASK BACKEND
- * LOCAL + PROD SAFE
- */
-
 /* ================= API BASE ================= */
 
 const API_BASE =
-  window.location.hostname === "127.0.0.1" ||
-  window.location.hostname === "localhost"
+  location.hostname === "localhost" || location.hostname === "127.0.0.1"
     ? "http://127.0.0.1:5000"
-    : "https://mywebsite-iopi.onrender.com";
+    : "https://bondvault-api.onrender.com";
 
-const API_BONDS = `${API_BASE}/api/bonds`;
 const API_VERIFY = `${API_BASE}/api/admin/verify`;
+const API_BONDS = `${API_BASE}/api/bonds`;
 const API_HEALTH = `${API_BASE}/api/health`;
 
 /* ================= STATE ================= */
 
-let AUTH_TOKEN = sessionStorage.getItem("bv_admin_token");
-let marketData = [];
+let token = sessionStorage.getItem("bv_admin_token");
+let bonds = [];
 
 /* ================= INIT ================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-  checkServerStatus();
+  checkHealth();
 
-  const loginForm = document.getElementById("admin-login-form");
-  if (loginForm) {
-    loginForm.addEventListener("submit", handleLogin);
-  }
+  document
+    .getElementById("admin-login-form")
+    ?.addEventListener("submit", login);
 
-  if (AUTH_TOKEN) {
-    loadBonds();
-  }
+  if (token) validateAndLoad();
 });
 
-/* ================= SERVER HEALTH ================= */
+/* ================= HEALTH ================= */
 
-async function checkServerStatus() {
+async function checkHealth() {
   try {
-    const res = await fetch(API_HEALTH);
-    if (!res.ok) throw new Error("Backend not reachable");
-  } catch (err) {
-    renderError("Backend server is not running");
+    await fetch(API_HEALTH);
+  } catch {
+    showError("Backend not running");
   }
 }
 
 /* ================= AUTH ================= */
 
-async function handleLogin(e) {
+async function login(e) {
   e.preventDefault();
 
   const username = document.getElementById("admin-user").value;
@@ -63,60 +52,57 @@ async function handleLogin(e) {
     });
 
     const data = await res.json();
+    if (!res.ok) throw new Error();
 
-    if (!res.ok) {
-      alert(data.error || "Login failed");
-      return;
-    }
-
-    AUTH_TOKEN = data.token;
-    sessionStorage.setItem("bv_admin_token", AUTH_TOKEN);
-    loadBonds();
-  } catch (err) {
-    alert("Server connection failed");
+    token = data.token;
+    sessionStorage.setItem("bv_admin_token", token);
+    validateAndLoad();
+  } catch {
+    alert("Invalid login");
   }
 }
 
-/* ================= DATA ================= */
+/* ================= SESSION VALIDATION ================= */
 
-async function loadBonds() {
+async function validateAndLoad() {
   try {
     const res = await fetch(API_BONDS, {
-      headers: {
-        Authorization: `Bearer ${AUTH_TOKEN}`
-      }
+      headers: { Authorization: `Bearer ${token}` }
     });
 
-    if (!res.ok) throw new Error("Unauthorized");
+    if (res.status === 401) {
+      sessionStorage.removeItem("bv_admin_token");
+      token = null;
+      return;
+    }
 
-    marketData = await res.json();
-    renderTable();
-  } catch (err) {
-    renderError("Failed to load bonds");
+    bonds = await res.json();
+    render();
+  } catch {
+    showError("Failed to load admin data");
   }
 }
 
 /* ================= UI ================= */
 
-function renderTable() {
-  const tbody = document.getElementById("tbl-body");
+function render() {
+  const body = document.getElementById("tbl-body");
 
-  tbody.innerHTML = marketData.length
-    ? marketData
+  body.innerHTML = bonds.length
+    ? bonds
         .map(
           (b) => `
       <tr>
         <td>${b.issuer_name || ""}</td>
         <td>${b.isin || ""}</td>
         <td>OK</td>
-      </tr>
-    `
+      </tr>`
         )
         .join("")
     : `<tr><td colspan="3">No data</td></tr>`;
 }
 
-function renderError(msg) {
+function showError(msg) {
   document.getElementById("tbl-body").innerHTML =
     `<tr><td colspan="3" style="color:red">${msg}</td></tr>`;
 }
