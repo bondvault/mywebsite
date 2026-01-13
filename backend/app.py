@@ -1,94 +1,103 @@
-from flask import Flask, request, jsonify, make_response
-from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
-import uuid
-import datetime
-import json
 import os
-import csv
-import io
-import base64
+import sqlite3
+import jwt
+import datetime
+from functools import wraps
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # ================= CONFIG =================
 
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin123")
-DATA_FILE = "bond_data.json"
+JWT_SECRET = os.environ.get("JWT_SECRET", "dev-secret")
+ADMIN_USER = os.environ.get("ADMIN_USER", "admin")
+ADMIN_PASS = os.environ.get("ADMIN_PASS", "password")
 
-# ===============================
-# DATA LOADING (FIXED FOR LIST)
-# ===============================
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-def load_data():
-    if os.path.exists(DATA_FILE):
+DB_FILE = "bonds.db"
+
+# ================= DATABASE =================
+
+def get_db():
+    conn = sqlite3.connect(DB_FILE, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    db = get_db()
+    db.execute("""
+        CREATE TABLE IF NOT EXISTS bonds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            issuer_name TEXT,
+            isin TEXT
+        )
+    """)
+    db.commit()
+
+init_db()
+
+# ================= AUTH =================
+
+def token_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        token = request.headers.get("Authorization", "").replace("Bearer ", "")
+        if not token:
+            return jsonify({"error": "Token missing"}), 401
         try:
-            with open(DATA_FILE, "r") as f:
-                data = json.load(f)
-                if isinstance(data, list):
-                    return {"bonds": data, "messages": []}
-                return data
-        except:
-            pass
-    return {"bonds": [], "messages": []}
+            jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+        except jwt.ExpiredSignatureError:
+            return jsonify({"error": "Token expired"}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({"error": "Invalid token"}), 401
+        return fn(*args, **kwargs)
+    return wrapper
 
-def save_data():
-    with open(DATA_FILE, "w") as f:
-        json.dump({"bonds": bonds_db, "messages": messages_db}, f, indent=2)
+# ================= ROUTES =================
 
-db = load_data()
-bonds_db = db.get("bonds", [])
-messages_db = db.get("messages", [])
+@app.route("/api/health")
+def health():
+    return jsonify({"status": "ok"})
 
-# ================= HEALTH =================
-
-@app.route("/api/health", methods=["GET"])
-def health_check():
-    return jsonify({"status": "online"}), 200
-
-# ================= ADMIN VERIFY (FIXED) =================
-
-@app.route("/api/admin/verify", methods=["GET"])
+@app.route("/api/admin/verify", methods=["POST"])
 def verify_admin():
-    auth = request.headers.get("Authorization")
-    if not auth:
-        return jsonify({"error": "Missing Token"}), 401
+    data = request.json or {}
+    if data.get("username") != ADMIN_USER or data.get("password") != ADMIN_PASS:
+        return jsonify({"error": "Invalid credentials"}), 401
 
-    try:
-        token = auth.replace("Bearer ", "")
-        decoded = base64.b64decode(token).decode("utf-8")
+    token = jwt.encode(
+        {
+            "user": ADMIN_USER,
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=2)
+        },
+        JWT_SECRET,
+        algorithm="HS256"
+    )
 
-        # ✅ DIRECT PASSWORD MATCH (STABLE)
-        if decoded == ADMIN_PASSWORD:
-            return jsonify({"status": "authorized"}), 200
-
-        return jsonify({"error": "Invalid Key"}), 403
-
-    except Exception:
-        return jsonify({"error": "Token Error"}), 401
-
-# ================= BONDS =================
+    return jsonify({"token": token})
 
 @app.route("/api/bonds", methods=["GET"])
+@token_required
 def get_bonds():
-    search = request.args.get("search", "").lower()
-    page = int(request.args.get("page", 1))
-    limit = int(request.args.get("limit", 50))
+    db = get_db()
+    rows = db.execute("SELECT issuer_name, isin FROM bonds").fetchall()
+    return jsonify([dict(r) for r in rows])
 
-    filtered = bonds_db
-    if search:
-        filtered = [
-            b for b in bonds_db
-            if search in str(b.get("issuer_name", "")).lower()
-        ]
-
-    start = (page - 1) * limit
-    end = start + limit
-    return jsonify(filtered[start:end]), 200
+@app.route("/api/bonds", methods=["POST"])
+@token_required
+def add_bond():
+    data = request.json or {}
+    db = get_db()
+    db.execute(
+        "INSERT INTO bonds (issuer_name, isin) VALUES (?, ?)",
+        (data.get("issuer_name"), data.get("isin"))
+    )
+    db.commit()
+    return jsonify({"status": "added"})
 
 # ================= RUN =================
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=5000)
