@@ -1,109 +1,78 @@
-/* ================= API BASE ================= */
+// ==================================================
+// ADMIN TOKEN (PERSISTENT STORAGE)
+// ==================================================
+let token = localStorage.getItem("bv_admin_token");
 
-const API_BASE =
-  location.hostname === "localhost" || location.hostname === "127.0.0.1"
-    ? "http://127.0.0.1:5000"
-    : "https://mywebsite-iopi.onrender.com";
-
-const API_VERIFY = `${API_BASE}/api/admin/verify`;
-const API_BONDS = `${API_BASE}/api/bonds`;
-const API_HEALTH = `${API_BASE}/api/health`;
-
-/* ================= STATE ================= */
-
-let token = sessionStorage.getItem("bv_admin_token");
-let bonds = [];
-
-/* ================= INIT ================= */
-
-document.addEventListener("DOMContentLoaded", () => {
-  checkHealth();
-
-  document
-    .getElementById("admin-login-form")
-    ?.addEventListener("submit", login);
-
-  if (token) validateAndLoad();
-});
-
-/* ================= HEALTH ================= */
-
-async function checkHealth() {
+// ==================================================
+// ADMIN LOGIN FUNCTION (NO UI CHANGE)
+// ==================================================
+async function adminLogin(username, password) {
   try {
-    await fetch(API_HEALTH);
-  } catch {
-    showError("Backend not reachable");
-  }
-}
-
-/* ================= AUTH ================= */
-
-async function login(e) {
-  e.preventDefault();
-
-  const username = document.getElementById("admin-user").value;
-  const password = document.getElementById("admin-pass").value;
-
-  try {
-    const res = await fetch(API_VERIFY, {
+    const res = await fetch("/admin/login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({ username, password })
     });
 
     const data = await res.json();
-    if (!res.ok) throw new Error();
 
-    token = data.token;
-    sessionStorage.setItem("bv_admin_token", token);
-    validateAndLoad();
-  } catch {
-    alert("Invalid login");
-  }
-}
-
-/* ================= SESSION CHECK ================= */
-
-async function validateAndLoad() {
-  try {
-    const res = await fetch(API_BONDS, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (res.status === 401) {
-      sessionStorage.removeItem("bv_admin_token");
-      token = null;
-      alert("Session expired. Please login again.");
+    if (!res.ok) {
+      alert(data.error || "Admin login failed");
       return;
     }
 
-    bonds = await res.json();
-    render();
-  } catch {
-    showError("Failed to load admin data");
+    localStorage.setItem("bv_admin_token", data.token);
+    token = data.token;
+    window.location.reload();
+
+  } catch (err) {
+    alert("Server error. Try again.");
   }
 }
 
-/* ================= UI ================= */
+// ==================================================
+// AUTHENTICATED FETCH WRAPPER
+// ==================================================
+function authFetch(url, options = {}) {
+  if (!token) {
+    window.location.reload();
+    return;
+  }
 
-function render() {
-  const body = document.getElementById("tbl-body");
-
-  body.innerHTML = bonds.length
-    ? bonds
-        .map(
-          (b) => `
-      <tr>
-        <td>${b.issuer_name || ""}</td>
-        <td>${b.isin || ""}</td>
-        <td>OK</td>
-      </tr>`
-        )
-        .join("")
-    : `<tr><td colspan="3">No data</td></tr>`;
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers || {}),
+      Authorization: `Bearer ${token}`
+    }
+  });
 }
 
-function showError(msg) {
-  document.getElementById("tbl-body").innerHTML =
-    `<tr><td colspan="3" style="color:red">${msg}</td></tr>`;
+// ==================================================
+// AUTO AUTH CHECK ON PAGE LOAD
+// ==================================================
+document.addEventListener("DOMContentLoaded", async () => {
+  if (!token) return;
+
+  try {
+    const res = await authFetch("/admin/dashboard");
+
+    if (!res || res.status === 401 || res.status === 403) {
+      localStorage.removeItem("bv_admin_token");
+      window.location.reload();
+    }
+  } catch (err) {
+    localStorage.removeItem("bv_admin_token");
+    window.location.reload();
+  }
+});
+
+// ==================================================
+// LOGOUT FUNCTION (UNCHANGED FLOW)
+// ==================================================
+function adminLogout() {
+  localStorage.removeItem("bv_admin_token");
+  window.location.reload();
 }
